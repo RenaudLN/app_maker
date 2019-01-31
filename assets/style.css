@@ -1,0 +1,29 @@
+.maker {
+    border: 2px solid black;
+    width: 1200px;
+    min-height: 600px;
+    background-size: 20px 60px;
+    background-image: linear-gradient(to right, grey 1px, transparent 1px);
+}
+
+
+
+.draggable {
+    width:120px;
+    background-color: rgba(20,125,222,.5);
+    color: #fff;
+    font-size: 1.2em;
+    border-radius: 4px;
+    height:60px;
+    touch-action: none;
+    height: 100%;
+  }
+  
+.row {
+    width: 100%;
+    background-color: rgba(255, 255, 255, .5);
+    height: 60px;
+    touch-action: none;
+    border: 1px solid lightgray;
+}
+  
