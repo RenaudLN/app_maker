@@ -10,10 +10,12 @@
 
 .draggable {
     width:120px;
-    background-color: rgba(20,125,222,.5);
+    background-color: rgba(120,225,122,.5);
     color: #fff;
     font-size: 1.2em;
     border-radius: 4px;
+    border: 2px dashed black;
+    box-sizing: border-box;
     height:60px;
     touch-action: none;
     height: 100%;
@@ -21,7 +23,7 @@
   
 .row {
     width: 100%;
-    background-color: rgba(255, 255, 255, .5);
+    background-color: rgba(200, 200, 255, .2);
     height: 60px;
     touch-action: none;
     border: 1px solid lightgray;

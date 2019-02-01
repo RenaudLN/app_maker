@@ -1,33 +1,34 @@
 
-var gridTarget = interact.createSnapGrid({x:20, y:5, offset:{x:10, y:10}})
+var gridResize = interact.createSnapGrid({x:20, y:5, offset:{x:10, y:10}})
+var gridDrag = interact.createSnapGrid({x:20, y:1000, offset:{x:10, y:8}})
 
 /////// DRAGGABLE
 interact('.draggable')
-  .draggable({
-    snap: {
-      targets: [gridTarget],
-      range: Infinity,
-      relativePoints: [ { x: 0, y: 0 } ]
-    },
-    // enable inertial throwing
-    inertia: false,
-    // keep the element within the area of it's parent
-    restrict: {
-      restriction: "parent",
-      endOnly: true,
-      elementRect: { top: 0, left: 0, bottom: 1, right: 1 }
-    },
-    // enable autoScroll
-    autoScroll: false,
+  // .draggable({
+  //   snap: {
+  //     targets: [gridDrag],
+  //     range: Infinity,
+  //     relativePoints: [ { x: 0, y: 0 } ]
+  //   },
+  //   // enable inertial throwing
+  //   inertia: false,
+  //   // keep the element within the area of it's parent
+  //   restrict: {
+  //     restriction: "parent",
+  //     endOnly: true,
+  //     elementRect: { top: 0, left: 0, bottom: 1, right: 1 }
+  //   },
+  //   // enable autoScroll
+  //   autoScroll: false,
 
-    // call this function on every dragmove event
-    onmove: dragMoveListener,
-  })
+  //   // call this function on every dragmove event
+  //   onmove: dragMoveListener,
+  // })
 
   .resizable({
-    edges: { left: true, right: true, bottom: false, top: false },
+    edges: { left: false, right: true, bottom: false, top: false },
     snap: {
-      targets: [gridTarget],
+      targets: [gridResize],
       range: Infinity,
       relativePoints: [ { x: 0, y: 0 } ]
     },
@@ -57,7 +58,7 @@ interact('.draggable')
 
     // update the element's style
     target.style.width  = event.rect.width + 'px';
-    target.style.height = '100%';//event.rect.height + 'px';
+    target.style.height = '99%';//event.rect.height + 'px';
 
     // translate when resizing from top or left edges
     x += event.deltaRect.left;
@@ -75,12 +76,12 @@ interact('.row')
   .resizable({
     edges: { left: false, right: false, bottom: true, top: false },
     snap: {
-      targets: [gridTarget],
+      targets: [gridResize],
       range: Infinity,
       relativePoints: [ { x: 0, y: 0 } ]
     },
     restrictSize: {
-      min: { width: 100, height: 60 },
+      min: { width: 100, height: 20 },
     },
     restrictEdges: {
       outer: "parent",
