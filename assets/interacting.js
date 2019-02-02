@@ -1,6 +1,6 @@
 
 var gridResize = interact.createSnapGrid({x:20, y:5, offset:{x:10, y:10}})
-var gridDrag = interact.createSnapGrid({x:20, y:1000, offset:{x:10, y:8}})
+var gridDrag = interact.createSnapGrid({x:20, y:1000, offset:{x:10, y:10}})
 
 /////// DRAGGABLE
 interact('.draggable')
@@ -33,7 +33,7 @@ interact('.draggable')
       relativePoints: [ { x: 0, y: 0 } ]
     },
     restrictSize: {
-      min: { width: 100, height: 60 },
+      min: { width: 20, height: 20 },
     },
     restrictEdges: {
       outer: "parent",

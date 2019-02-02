@@ -11,24 +11,22 @@ import plotly.graph_objs as go
 import plotly.offline as py
 from dash.dependencies import Input, Output, State
 
-# import callbacks
-
 FOCUSED_ROW = 'row_0'
 FOCUSED_ELEMENT = ''
 N_ROWS = 3
 N_ELEMENTS = 10
-ELTS_PER_ROW = pd.Series(-1, range(N_ROWS))
+# ELTS_PER_ROW = pd.Series(-1, range(N_ROWS))
+ELTS_PER_ROW = pd.DataFrame(np.zeros((N_ROWS, N_ELEMENTS), dtype=int))
+DISPLAY = {0:{'display':'none'}, 1:{'display':'inline-block'}}
 
 external_stylesheets = ['https://codepen.io/chriddyp/pen/bWLwgP.css']
 
 app = dash.Dash(__name__, external_stylesheets=external_stylesheets)
 app.layout = html.Div([
-    # dcc.Interval(id='update_focus', interval=1000, n_intervals=0),
     html.Div([
-        # html.H4('App Maker'),
         html.Div([
             html.Div([
-                html.Div(className='draggable', id=f'item_{id_row}_{id_item}', style={'display':'none'}) for id_item in range(N_ELEMENTS)
+                html.Div(className='draggable', id=f'item_{id_row}_{id_item}', style=DISPLAY[ELTS_PER_ROW.loc[id_row, id_item]]) for id_item in range(N_ELEMENTS)
             ], className='row', n_clicks=0, id=f'row_{id_row}', style={'display':'block'}) for id_row in range(N_ROWS)
         ], id='div_maker', className='maker')
     ]),
@@ -39,6 +37,7 @@ app.layout = html.Div([
     html.Div(id='dummy2')
 ])
 
+# app.scripts.append_script({"external_url": "C:/Users/renau/App_maker/assets/interactjs/dist/interact.min.js"})
 app.scripts.append_script({"external_url": "http://code.interactjs.io/v1.3.4/interact.min.js"})
 
 def add_row_click_callback(app, id):
@@ -80,48 +79,60 @@ def add_elt_focus_callback(app, id):
 def add_element_style_callback(app, id):
 
     @app.callback(Output(id, 'style'),
-                 [Input('add_element', 'n_clicks_timestamp'),
-                  Input('remove_element', 'n_clicks_timestamp')],
-                 [State(id, 'style'),
-                  State('dummy2', 'data-dummy')])
-    def f(ts_add, ts_rmv, style, data):
+                 [Input('dummy2', 'data-dummy')])
+    def f(focused):
         global ELTS_PER_ROW
         global FOCUSED_ROW
-        row_number = int(FOCUSED_ROW.split('_')[-1])
+        global FOCUSED_ELEMENT
         row = int(id.split('_')[1])
         elt = int(id.split('_')[2])
-        if ts_add is None:
-            ts_add = 0
-        if ts_rmv is None:
-            ts_rmv = 0
-        if ts_add > ts_rmv:
-            if row == row_number and elt == ELTS_PER_ROW[row_number] + 1:
-                ELTS_PER_ROW[row_number] = ELTS_PER_ROW[row_number] + 1
-                return {'display':'inline-block'}
-        elif ts_add < ts_rmv:
-            if id == data:
-                ELTS_PER_ROW[row_number] = ELTS_PER_ROW[row_number] - 1
-                return {'display':'none'}
-        return style
-
+        if id == focused:
+            return {'display':'inline-block', 'background-color':'rgba(0,200,0,.25)'}
+        elif ELTS_PER_ROW.loc[row, elt] == 1:
+            return {'display':'inline-block'}
+        else:
+            return{'display':'none'}
 
     return app
 
 @app.callback(Output('dummy', 'data-dummy'),
-             [Input(f'row_{i}', 'n_clicks') for i in range(N_ROWS)])
+             [Input(f'row_{i}', 'n_clicks_timestamp') for i in range(N_ROWS)])
 def f(*args):
-    # if np.any(np.array(args) > 0):
     global FOCUSED_ROW
+    s = pd.Series(args, index=[f'row_{i}' for i in range(N_ROWS)])
+    if not s.dropna().empty:
+        FOCUSED_ROW = s.idxmax()
     return FOCUSED_ROW
 
+
 @app.callback(Output('dummy2', 'data-dummy'),
+             [Input('add_element', 'n_clicks_timestamp'),
+              Input('remove_element', 'n_clicks_timestamp')] +
              [Input(f'item_{i}_{j}', 'n_clicks_timestamp') for i, j in itertools.product(range(N_ROWS), range(N_ELEMENTS))])
-def f(*args):
+def f(ts_add, ts_rmv, *args):
+    global FOCUSED_ELEMENT
+    global FOCUSED_ROW
+    global ELTS_PER_ROW
     s = pd.Series(args, index=[f'item_{i}_{j}' for i, j in itertools.product(range(N_ROWS), range(N_ELEMENTS))])
+    s['add'] = ts_add
+    s['rmv'] = ts_rmv
+    s = s.astype(float)
+    focused_before = FOCUSED_ELEMENT
     if not s.dropna().empty:
-        global FOCUSED_ELEMENT
-        FOCUSED_ELEMENT = s.idxmax()
-        return FOCUSED_ELEMENT
+        FOCUSED_ELEMENT = s.dropna().idxmax()
+        row = int(FOCUSED_ROW.split('_')[1])
+        if FOCUSED_ELEMENT == 'add':
+            elt = ELTS_PER_ROW.loc[row][ELTS_PER_ROW.loc[row] == 0].index.min()
+            ELTS_PER_ROW.at[row, elt] = 1
+            FOCUSED_ELEMENT = f'item_{row}_{elt}'
+        elif FOCUSED_ELEMENT == 'rmv':
+            row_before = int(focused_before.split('_')[1])
+            elt_before = int(focused_before.split('_')[2])
+            ELTS_PER_ROW.at[row_before, elt_before] = 0
+            elt = ELTS_PER_ROW.loc[row][ELTS_PER_ROW.loc[row] == 1].index.max()
+            FOCUSED_ELEMENT = f'item_{row}_{elt}'
+
+    return FOCUSED_ELEMENT
 
 # @app.callback(Output('div_maker', 'children'),
 #              [Input('add_row', 'n_clicks')],
@@ -140,11 +151,6 @@ def f(*args):
 #     print(app.callback_map)
 #     return out
 
-# @app.callback(Output('add_element', 'data-dummy'),
-#              [Input('add_element', 'n_clicks')])
-# def f(n):
-#     if n > 0:
-#         print('FOCUSED_ROW:', FOCUSED_ROW)
 
 
 for id_row in range(N_ROWS):
@@ -155,5 +161,5 @@ for id_row in range(N_ROWS):
 
 
 if __name__ == '__main__':
-    app.run_server(debug=True)
+    app.run_server(debug=False)
 
