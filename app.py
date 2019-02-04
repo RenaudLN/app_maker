@@ -14,12 +14,11 @@ from dash.dependencies import Input, Output, State
 FOCUSED_ROW = 'row_0'
 FOCUSED_ELEMENT = ''
 N_ROWS = 6
-N_ELEMENTS = 8
+N_ELEMENTS = 12
 # ELTS_PER_ROW = pd.Series(-1, range(N_ROWS))
 ELTS_PER_ROW = pd.DataFrame(np.zeros((N_ROWS, N_ELEMENTS), dtype=int))
 DISPLAY = {0:{'display':'none'}, 1:{'display':'inline-block'}}
 ACTIVE_ROWS = pd.Series({i:0 for i in range(N_ROWS)})
-# ACTIVE_ROWS[0] = 1
 
 external_stylesheets = ['https://codepen.io/chriddyp/pen/bWLwgP.css']
 
@@ -29,13 +28,17 @@ app.layout = html.Div([
         html.Div([
             html.Div([
                 html.Div(className='draggable', id=f'item_{id_row}_{id_item}', style=DISPLAY[ELTS_PER_ROW.loc[id_row, id_item]]) for id_item in range(N_ELEMENTS)
-            ], className='row', n_clicks=0, id=f'row_{id_row}', style=DISPLAY[ACTIVE_ROWS[id_row]]) for id_row in range(N_ROWS)
-        ], id='div_maker', className='maker')
-    ]),
-    html.Button('Add row', id='add_row', n_clicks=0),
-    html.Button('Add element', id='add_element', n_clicks=0),
-    html.Button('Remove element', id='remove_element', n_clicks=0),
-    html.Button('Reset', id='reset', n_clicks=0),
+                ], className='row', n_clicks=0, id=f'row_{id_row}', style=DISPLAY[ACTIVE_ROWS[id_row]]) for id_row in range(N_ROWS)
+            ], id='div_maker', className='maker'
+        ),
+        html.Div([html.Button('Add row', id='add_row', n_clicks=0), html.Br(),
+                html.Button('Add element', id='add_element', n_clicks=0), html.Br(),
+                html.Button('Remove element', id='remove_element', n_clicks=0), html.Br(),
+                html.Button('Reset', id='reset', n_clicks=0), html.Br(),
+            ], id='div_btns', className='buttons'
+        )
+    ], style={'display':'table'}),
+    
     html.Div(id='dummy'),
     html.Div(id='dummy2'),
     html.Div(id='dummy3'),
@@ -66,23 +69,12 @@ def add_row_focus_callback(app, id):
         row = int(id.split('_')[1])
         if ACTIVE_ROWS[row] == 1:
             if data is not None and data == id:
+                return{'box-shadow': '0 1px 1px rgba(0, 0, 0, 0.075) inset, 0 0 8px rgba(239, 102, 104, 0.9)'}
                 return {'border':'1px solid red'}
             else:
                 return {}
         else:
             return {'display':'none'}
-    
-    return app
-
-def add_elt_focus_callback(app, id):
-
-    @app.callback(Output(id, 'data-dummy'),
-                 [Input('dummy', 'data-dummy')])
-    def f(data):
-        if data is not None and data == id:
-            return {'border':'1px solid red'}
-        else:
-            return {}
     
     return app
 
@@ -97,7 +89,8 @@ def add_element_style_callback(app, id):
         row = int(id.split('_')[1])
         elt = int(id.split('_')[2])
         if id == focused:
-            return {'display':'inline-block', 'background-color':'rgba(0,200,0,.25)'}
+            return {'display':'inline-block', 'background-color':'rgba(180, 180, 180, .25)',
+                    'box-shadow': '0 1px 1px rgba(0, 0, 0, 0.075) inset, 0 0 8px rgba(58, 72, 224, 0.9)'}
         elif ELTS_PER_ROW.loc[row, elt] == 1:
             return {'display':'inline-block'}
         else:
@@ -106,12 +99,18 @@ def add_element_style_callback(app, id):
     return app
 
 @app.callback(Output('dummy', 'data-dummy'),
+             [Input('add_row', 'n_clicks_timestamp')] +
              [Input(f'row_{i}', 'n_clicks_timestamp') for i in range(N_ROWS)])
-def f(*args):
+def f(ts_add, *args):
     global FOCUSED_ROW
+    global ACTIVE_ROWS
     s = pd.Series(args, index=[f'row_{i}' for i in range(N_ROWS)])
+    s['add'] = 0 if ts_add is None else ts_add
+    s = s.astype(float)
     if not s.dropna().empty:
         FOCUSED_ROW = s.idxmax()
+        if FOCUSED_ROW == 'add':
+            FOCUSED_ROW = 'row_{}'.format(ACTIVE_ROWS[ACTIVE_ROWS == 1].index.max())
     return FOCUSED_ROW
 
 
@@ -170,5 +169,5 @@ for id_row in range(N_ROWS):
 
 
 if __name__ == '__main__':
-    app.run_server(debug=True)
+    app.run_server(debug=False)
 

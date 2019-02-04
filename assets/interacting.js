@@ -1,6 +1,8 @@
 
-var gridResize = interact.createSnapGrid({x:20, y:5, offset:{x:10, y:10}})
-var gridDrag = interact.createSnapGrid({x:20, y:1000, offset:{x:10, y:10}})
+var dx = 10
+var dy = 5
+var gridResize = interact.createSnapGrid({x:dx, y:dy, offset:{x:10, y:10}})
+var gridDrag = interact.createSnapGrid({x:dx, y:1000, offset:{x:10, y:10}})
 
 /////// DRAGGABLE
 interact('.draggable')
@@ -29,7 +31,7 @@ interact('.draggable')
     edges: { left: false, right: true, bottom: false, top: false },
     snap: {
       targets: [gridResize],
-      range: Infinity,
+      // range: Infinity,
       relativePoints: [ { x: 0, y: 0 } ]
     },
     restrictSize: {
@@ -37,7 +39,7 @@ interact('.draggable')
     },
     restrictEdges: {
       outer: "parent",
-      endOnly: true,
+      endOnly: false,
       elementRect: { top: 0, left: 0, bottom: 1, right: 1 }
     }
   })
@@ -57,8 +59,8 @@ interact('.draggable')
         y = (parseFloat(target.getAttribute('data-y')) || 0);
 
     // update the element's style
-    target.style.width  = event.rect.width + 'px';
-    target.style.height = '99%';//event.rect.height + 'px';
+    target.style.width  = Math.round(event.rect.width/dx)*dx + 'px';
+    // target.style.height = '100%';//event.rect.height + 'px';
 
     // translate when resizing from top or left edges
     x += event.deltaRect.left;
@@ -106,7 +108,7 @@ interact('.row')
 
     // update the element's style
     // target.style.width  = event.rect.width + 'px';
-    target.style.height = event.rect.height + 'px';
+    target.style.height = Math.round(event.rect.height/dy)*dy + 'px';
 
     // translate when resizing from top or left edges
     // x += event.deltaRect.left;
