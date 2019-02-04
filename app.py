@@ -13,11 +13,13 @@ from dash.dependencies import Input, Output, State
 
 FOCUSED_ROW = 'row_0'
 FOCUSED_ELEMENT = ''
-N_ROWS = 3
-N_ELEMENTS = 10
+N_ROWS = 6
+N_ELEMENTS = 8
 # ELTS_PER_ROW = pd.Series(-1, range(N_ROWS))
 ELTS_PER_ROW = pd.DataFrame(np.zeros((N_ROWS, N_ELEMENTS), dtype=int))
 DISPLAY = {0:{'display':'none'}, 1:{'display':'inline-block'}}
+ACTIVE_ROWS = pd.Series({i:0 for i in range(N_ROWS)})
+# ACTIVE_ROWS[0] = 1
 
 external_stylesheets = ['https://codepen.io/chriddyp/pen/bWLwgP.css']
 
@@ -27,14 +29,16 @@ app.layout = html.Div([
         html.Div([
             html.Div([
                 html.Div(className='draggable', id=f'item_{id_row}_{id_item}', style=DISPLAY[ELTS_PER_ROW.loc[id_row, id_item]]) for id_item in range(N_ELEMENTS)
-            ], className='row', n_clicks=0, id=f'row_{id_row}', style={'display':'block'}) for id_row in range(N_ROWS)
+            ], className='row', n_clicks=0, id=f'row_{id_row}', style=DISPLAY[ACTIVE_ROWS[id_row]]) for id_row in range(N_ROWS)
         ], id='div_maker', className='maker')
     ]),
     html.Button('Add row', id='add_row', n_clicks=0),
     html.Button('Add element', id='add_element', n_clicks=0),
     html.Button('Remove element', id='remove_element', n_clicks=0),
+    html.Button('Reset', id='reset', n_clicks=0),
     html.Div(id='dummy'),
-    html.Div(id='dummy2')
+    html.Div(id='dummy2'),
+    html.Div(id='dummy3'),
 ])
 
 # app.scripts.append_script({"external_url": "C:/Users/renau/App_maker/assets/interactjs/dist/interact.min.js"})
@@ -55,12 +59,18 @@ def add_row_click_callback(app, id):
 def add_row_focus_callback(app, id):
 
     @app.callback(Output(id, 'style'),
-                 [Input('dummy', 'data-dummy')])
-    def f(data):
-        if data is not None and data == id:
-            return {'border':'1px solid red'}
+                 [Input('dummy', 'data-dummy'),
+                  Input('dummy3', 'data-dummy')])
+    def f(data, trigger):
+        global ACTIVE_ROWS
+        row = int(id.split('_')[1])
+        if ACTIVE_ROWS[row] == 1:
+            if data is not None and data == id:
+                return {'border':'1px solid red'}
+            else:
+                return {}
         else:
-            return {}
+            return {'display':'none'}
     
     return app
 
@@ -134,22 +144,21 @@ def f(ts_add, ts_rmv, *args):
 
     return FOCUSED_ELEMENT
 
-# @app.callback(Output('div_maker', 'children'),
-#              [Input('add_row', 'n_clicks')],
-#              [State('div_maker', 'children')])
-# def f(n, children):
-#     global app
-#     if n is None:
-#         n = 0
-#     row = html.Div(className='row', n_clicks=0, id='row_{}'.format(n))
-#     if children is None:
-#         out = [row]
-#     else:
-#         out = children + [row]
-#     app.layout.children[0].children[0].children.append(row)
-#     app = add_row_click_callback(app, 'row_{}'.format(n))
-#     print(app.callback_map)
-#     return out
+@app.callback(Output('dummy3', 'data-dummy'),
+             [Input('add_row', 'n_clicks_timestamp'),
+              Input('reset', 'n_clicks_timestamp')])
+def f(ts_add, ts_rst):
+    global ACTIVE_ROWS
+    ts_add = 0 if ts_add is None else ts_add
+    ts_rst = 0 if ts_rst is None else ts_rst
+    if ts_add >= ts_rst:
+        row = ACTIVE_ROWS[ACTIVE_ROWS == 0].index.min()
+        ACTIVE_ROWS[row] = 1
+        return row
+    else:
+        ACTIVE_ROWS = pd.Series(0, ACTIVE_ROWS.index)
+        ACTIVE_ROWS[0] = 1
+        return 0
 
 
 
@@ -161,5 +170,5 @@ for id_row in range(N_ROWS):
 
 
 if __name__ == '__main__':
-    app.run_server(debug=False)
+    app.run_server(debug=True)
 

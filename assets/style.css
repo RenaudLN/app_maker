@@ -1,7 +1,7 @@
 .maker {
     border: 2px solid black;
     width: 1200px;
-    min-height: 100px;
+    min-height: 300px;
     background-size: 20px 60px;
     background-image: linear-gradient(to right, grey 1px, transparent 1px);
 }
