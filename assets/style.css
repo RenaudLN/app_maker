@@ -2,22 +2,29 @@
     border: 2px solid black;
     width: 600px;
     min-height: 300px;
-    display: table-cell;
+    display: block;
+    position: absolute;
+    top: 0;
     background-size: 300px 60px, 50px 60px, 10px 60px;
     background-image: repeating-linear-gradient(90deg,transparent,transparent 299px,#000 299px,#000 300px),
-                      repeating-linear-gradient(90deg,transparent,transparent 49px,#555 49px,#555 50px),
+                      repeating-linear-gradient(90deg,transparent,transparent 49px,#777 49px,#777 50px),
                       repeating-linear-gradient(90deg,transparent,transparent 9px,#CCC 9px,#CCC 10px);
 }
 
 .buttons {
     display:table-cell;
+    position:absolute;
+    top:0;
+    left:600px;
     width:150px;
     padding-top:0px !important; 
     min-height:300px;
 }
 
 button{
-    margin: 5px 20px
+    margin: 5px 20px;
+    width: 100%;
+    padding: 0px 15px;
 }
 
 .draggable {

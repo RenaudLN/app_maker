@@ -12,7 +12,7 @@ import plotly.offline as py
 from dash.dependencies import Input, Output, State
 
 FOCUSED_ROW = 'row_0'
-FOCUSED_ELEMENT = ''
+FOCUSED_ELEMENT = 'item_0_0'
 N_ROWS = 6
 N_ELEMENTS = 12
 # ELTS_PER_ROW = pd.Series(-1, range(N_ROWS))
@@ -27,10 +27,13 @@ app.layout = html.Div([
     html.Div([
         html.Div([
             html.Div([
-                html.Div(className='draggable', id=f'item_{id_row}_{id_item}', style=DISPLAY[ELTS_PER_ROW.loc[id_row, id_item]]) for id_item in range(N_ELEMENTS)
-                ], className='row', n_clicks=0, id=f'row_{id_row}', style=DISPLAY[ACTIVE_ROWS[id_row]]) for id_row in range(N_ROWS)
-            ], id='div_maker', className='maker'
-        ),
+                html.Div([
+                    html.Div(className='draggable', id=f'item_{id_row}_{id_item}', style=DISPLAY[ELTS_PER_ROW.loc[id_row, id_item]]) for id_item in range(N_ELEMENTS)
+                    ], className='row', n_clicks=0, id=f'row_{id_row}', style=DISPLAY[ACTIVE_ROWS[id_row]]) for id_row in range(N_ROWS)
+                ], id='div_maker', className='maker'
+            ),
+        ], style={'display':'table-cell'}),
+            
         html.Div([html.Button('Add row', id='add_row', n_clicks=0), html.Br(),
                 html.Button('Add element', id='add_element', n_clicks=0), html.Br(),
                 html.Button('Remove element', id='remove_element', n_clicks=0), html.Br(),
@@ -169,5 +172,5 @@ for id_row in range(N_ROWS):
 
 
 if __name__ == '__main__':
-    app.run_server(debug=False)
+    app.run_server(debug=True)
 

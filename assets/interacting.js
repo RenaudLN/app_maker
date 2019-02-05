@@ -1,6 +1,6 @@
 
 var dx = 10
-var dy = 5
+var dy = 1
 var gridResize = interact.createSnapGrid({x:dx, y:dy, offset:{x:10, y:10}})
 var gridDrag = interact.createSnapGrid({x:dx, y:1000, offset:{x:10, y:10}})
 
@@ -112,7 +112,7 @@ interact('.row')
 
     // translate when resizing from top or left edges
     // x += event.deltaRect.left;
-    y += event.deltaRect.top;
+    // y += event.deltaRect.top;
 
     target.style.webkitTransform = target.style.transform =
         'translate(' + 0 + 'px,' + y + 'px)';
