@@ -21,8 +21,11 @@ N_ELEMENTS = 12
 ELTS_PER_ROW = pd.DataFrame(np.zeros((N_ROWS, N_ELEMENTS), dtype=int))
 ELTS_PER_ROW.at[0, 0] = 1
 ACTIVE_ROWS = pd.Series({i:0 for i in range(N_ROWS)})
-ELT_PROPS = {f'item_{i}_{j}':pd.DataFrame([['type', 'div']] + [[prop, ''] for prop in var.component_properties['div']], columns=['Property', 'Value'])
-                for i, j in itertools.product(range(N_ROWS), range(N_ELEMENTS))}
+default_component = 'Div'
+ELT_PROPS = {f'item_{i}_{j}':pd.DataFrame([['Component', default_component]] +
+                                          [[prop, ''] for prop in var.component_properties[default_component]],
+                                          columns=['Property', 'Value'])
+            for i, j in itertools.product(range(N_ROWS), range(N_ELEMENTS))}
 
 external_stylesheets = ['https://codepen.io/chriddyp/pen/bWLwgP.css']
 
@@ -77,13 +80,13 @@ def add_row_click_callback(app, id):
 def add_row_focus_callback(app, id):
 
     @app.callback(Output(id, 'className'),
-                 [Input('dummy', 'data-dummy'),
-                  Input('dummy3', 'data-dummy')])
-    def f(data, trigger):
+                 [Input('dummy3', 'data-dummy')])
+    def f(trigger):
         global ACTIVE_ROWS
+        global FOCUSED_ROW
         row = int(id.split('_')[1])
         if ACTIVE_ROWS[row] == 1:
-            if data is not None and data == id:
+            if FOCUSED_ROW is not None and FOCUSED_ROW == id:
                 return 'line focused'
             else:
                 return 'line'
@@ -165,15 +168,18 @@ def f(ts_add, ts_rmv, *args):
               Input('reset', 'n_clicks_timestamp')])
 def f(ts_add, ts_rst):
     global ACTIVE_ROWS
+    global FOCUSED_ROW
     ts_add = 0 if ts_add is None else ts_add
     ts_rst = 0 if ts_rst is None else ts_rst
-    if ts_add >= ts_rst:
+    if ts_add > ts_rst:
         row = ACTIVE_ROWS[ACTIVE_ROWS == 0].index.min()
         ACTIVE_ROWS[row] = 1
+        FOCUSED_ROW = 0
         return row
     else:
         ACTIVE_ROWS = pd.Series(0, ACTIVE_ROWS.index)
         ACTIVE_ROWS[0] = 1
+        FOCUSED_ROW = 'row_0'
         return 0
 
 @app.callback(Output('elt_info', 'data'),
@@ -193,11 +199,9 @@ def update_id(ts_data, ts_add, ts_rmv, *args):
     s = s.astype(float)
     if not s.dropna().empty and s.dropna().idxmax() == 'data':
         data = pd.DataFrame(args[-1])
-        component = data.loc[data.Property == 'type'].Value.values[0].lower()
-        print('COMPONENT', component)
+        component = data.loc[data.Property == 'Component'].Value.values[0].capitalize()
         if component in var.component_properties.keys():
-            print('HERE')
-            new_data = pd.DataFrame([{'Property':'type', 'Value':component}] + 
+            new_data = pd.DataFrame([{'Property':'Component', 'Value':component}] + 
                                     [{'Property':p, 'Value':''} for p in var.component_properties[component]])
             for prop in data.Property.values:
                 if prop in new_data.Property.values:
