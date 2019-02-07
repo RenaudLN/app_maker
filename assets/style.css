@@ -11,23 +11,7 @@
                       repeating-linear-gradient(90deg,transparent,transparent 9px,#CCC 9px,#CCC 10px);
 }
 
-.buttons {
-    display:table-cell;
-    position:absolute;
-    top:0;
-    left:600px;
-    width:150px;
-    padding-top:0px !important; 
-    min-height:300px;
-}
-
-button{
-    margin: 5px 20px;
-    width: 100%;
-    padding: 0px 15px;
-}
-
-.draggable {
+.elt {
     width:150px;
     background-color: rgba(250,250,250,.25);
     color: #fff;
@@ -37,13 +21,87 @@ button{
     box-sizing: border-box;
     touch-action: none;
     height: 100%;
+    position: relative;
+    z-index: 10;
+    display: inline-block
   }
 
-.row {
+.elt.focused {
+    display: inline-block;
+    background-color: rgba(180, 180, 180, .25);
+    box-shadow: 0 1px 1px rgba(0, 0, 0, 0.075) inset, 0 0 8px rgba(58, 72, 224, 0.9);
+    z-index: 99;
+}
+
+.line {
     width: 100%;
     background-color: rgba(200, 200, 255, .2);
     height: 60px;
     touch-action: none;
     border: 1px solid lightgray;
+    position: relative;
+    z-index: 1;
 }
-  
+
+.line.focused {
+    box-shadow: 0 1px 1px rgba(0, 0, 0, 0.075) inset, 0 0 8px rgba(239, 102, 104, 0.9);
+    z-index: 9;
+}
+
+.hidden {
+    display: none;
+}
+
+#div_btns {
+    display:table-cell;
+    position:absolute;
+    top:0;
+    left:600px;
+    width:150px;
+    padding-top:0px !important; 
+    min-height:300px;
+}
+
+#div_controls {
+    display:table-cell;
+    position:absolute;
+    top:0;
+    left:800px;
+    width:auto;
+    padding-top:5px !important; 
+    min-height:300px;
+    right: 8px;
+}
+
+button{
+    margin: 5px 20px;
+    width: 100%;
+    padding: 0px 15px;
+}
+
+.control-id {
+    margin: 5px 0px;
+    display: inline-block;
+    width: 20%;
+}
+
+.control {
+    margin: 5px 20px;
+    display: inline-block;
+    width: 75%;
+}
+
+.dash-spreadsheet-container .dash-spreadsheet-inner td, .dash-spreadsheet-container .dash-spreadsheet-inner th,
+.dash-spreadsheet-container .dash-spreadsheet-inner input:not([type=radio]):not([type=checkbox]) {
+    text-align: left !important;
+}
+
+.dash-spreadsheet-container .dash-spreadsheet-inner th {
+    font-weight: bold;
+    font-size: 14px;
+}
+
+.column-0 {
+    width: 25%;
+    font-weight: bold;
+}

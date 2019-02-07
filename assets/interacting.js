@@ -4,8 +4,8 @@ var dy = 1
 var gridResize = interact.createSnapGrid({x:dx, y:dy, offset:{x:10, y:10}})
 var gridDrag = interact.createSnapGrid({x:dx, y:1000, offset:{x:10, y:10}})
 
-/////// DRAGGABLE
-interact('.draggable')
+/////// ELEMENT
+interact('.elt')
   // .draggable({
   //   snap: {
   //     targets: [gridDrag],
@@ -74,7 +74,7 @@ interact('.draggable')
   });
 
 /////// ROW
-interact('.row')
+interact('.line')
   .resizable({
     edges: { left: false, right: false, bottom: true, top: false },
     snap: {

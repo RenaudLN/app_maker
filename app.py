@@ -7,18 +7,22 @@ import itertools
 import dash
 import dash_core_components as dcc
 import dash_html_components as html
+import dash_table as dtt
 import plotly.graph_objs as go
 import plotly.offline as py
 from dash.dependencies import Input, Output, State
+
+import var
 
 FOCUSED_ROW = 'row_0'
 FOCUSED_ELEMENT = 'item_0_0'
 N_ROWS = 6
 N_ELEMENTS = 12
-# ELTS_PER_ROW = pd.Series(-1, range(N_ROWS))
 ELTS_PER_ROW = pd.DataFrame(np.zeros((N_ROWS, N_ELEMENTS), dtype=int))
-DISPLAY = {0:{'display':'none'}, 1:{'display':'inline-block'}}
+ELTS_PER_ROW.at[0, 0] = 1
 ACTIVE_ROWS = pd.Series({i:0 for i in range(N_ROWS)})
+ELT_PROPS = {f'item_{i}_{j}':pd.DataFrame([['id', f'item_{i}_{j}'],['type','div'],['text','hello world']], columns=['Property','Value'])
+                for i, j in itertools.product(range(N_ROWS), range(N_ELEMENTS))}
 
 external_stylesheets = ['https://codepen.io/chriddyp/pen/bWLwgP.css']
 
@@ -28,8 +32,8 @@ app.layout = html.Div([
         html.Div([
             html.Div([
                 html.Div([
-                    html.Div(className='draggable', id=f'item_{id_row}_{id_item}', style=DISPLAY[ELTS_PER_ROW.loc[id_row, id_item]]) for id_item in range(N_ELEMENTS)
-                    ], className='row', n_clicks=0, id=f'row_{id_row}', style=DISPLAY[ACTIVE_ROWS[id_row]]) for id_row in range(N_ROWS)
+                    html.Div(className='elt hidden', id=f'item_{id_row}_{id_item}') for id_item in range(N_ELEMENTS)
+                    ], className='line hidden', n_clicks=0, id=f'row_{id_row}') for id_row in range(N_ROWS)
                 ], id='div_maker', className='maker'
             ),
         ], style={'display':'table-cell'}),
@@ -38,13 +42,21 @@ app.layout = html.Div([
                 html.Button('Add element', id='add_element', n_clicks=0), html.Br(),
                 html.Button('Remove element', id='remove_element', n_clicks=0), html.Br(),
                 html.Button('Reset', id='reset', n_clicks=0), html.Br(),
-            ], id='div_btns', className='buttons'
-        )
+            ], id='div_btns'
+        ),
+        html.Div([
+            dtt.DataTable(id='elt_info', 
+                columns=[{'name':'Property', 'id':'Property', 'editable':False}, {'name':'Value', 'id':'Value', 'editable':True}],
+                data=ELT_PROPS[FOCUSED_ELEMENT].to_dict('rows'),
+                editable=True,
+            )
+        ], id='div_controls')
     ], style={'display':'table'}),
     
     html.Div(id='dummy'),
     html.Div(id='dummy2'),
     html.Div(id='dummy3'),
+    html.Div(id='dummy4'),
 ])
 
 # app.scripts.append_script({"external_url": "C:/Users/renau/App_maker/assets/interactjs/dist/interact.min.js"})
@@ -64,7 +76,7 @@ def add_row_click_callback(app, id):
 
 def add_row_focus_callback(app, id):
 
-    @app.callback(Output(id, 'style'),
+    @app.callback(Output(id, 'className'),
                  [Input('dummy', 'data-dummy'),
                   Input('dummy3', 'data-dummy')])
     def f(data, trigger):
@@ -72,18 +84,17 @@ def add_row_focus_callback(app, id):
         row = int(id.split('_')[1])
         if ACTIVE_ROWS[row] == 1:
             if data is not None and data == id:
-                return{'box-shadow': '0 1px 1px rgba(0, 0, 0, 0.075) inset, 0 0 8px rgba(239, 102, 104, 0.9)'}
-                return {'border':'1px solid red'}
+                return 'line focused'
             else:
-                return {}
+                return 'line'
         else:
-            return {'display':'none'}
+            return 'line hidden'
     
     return app
 
 def add_element_style_callback(app, id):
 
-    @app.callback(Output(id, 'style'),
+    @app.callback(Output(id, 'className'),
                  [Input('dummy2', 'data-dummy')])
     def f(focused):
         global ELTS_PER_ROW
@@ -92,11 +103,14 @@ def add_element_style_callback(app, id):
         row = int(id.split('_')[1])
         elt = int(id.split('_')[2])
         if id == focused:
+            return 'elt focused'
             return {'display':'inline-block', 'background-color':'rgba(180, 180, 180, .25)',
                     'box-shadow': '0 1px 1px rgba(0, 0, 0, 0.075) inset, 0 0 8px rgba(58, 72, 224, 0.9)'}
         elif ELTS_PER_ROW.loc[row, elt] == 1:
+            return 'elt'
             return {'display':'inline-block'}
         else:
+            return 'elt hidden'
             return{'display':'none'}
 
     return app
@@ -162,7 +176,26 @@ def f(ts_add, ts_rst):
         ACTIVE_ROWS[0] = 1
         return 0
 
-
+@app.callback(Output('elt_info', 'data'),
+             [Input('elt_info', 'data_timestamp'),
+              Input('add_element', 'n_clicks_timestamp'),
+              Input('remove_element', 'n_clicks_timestamp')] +
+             [Input(f'item_{i}_{j}', 'n_clicks_timestamp') for i, j in itertools.product(range(N_ROWS), range(N_ELEMENTS))],
+             [State('elt_info', 'data')])
+def update_id(ts_data, ts_add, ts_rmv, *args):
+    time.sleep(.2)
+    global ELT_PROPS
+    global FOCUSED_ELEMENT
+    s = pd.Series(args[:-1], index=[f'item_{i}_{j}' for i, j in itertools.product(range(N_ROWS), range(N_ELEMENTS))])
+    s['data'] = ts_data
+    s['add'] = ts_add
+    s['rmv'] = ts_rmv
+    s = s.astype(float)
+    if not s.dropna().empty and s.dropna().idxmax() == 'data':
+        data = args[-1]
+        print('CHECKING VALID DATA')
+        return data
+    return ELT_PROPS[FOCUSED_ELEMENT].to_dict('rows')
 
 for id_row in range(N_ROWS):
     app = add_row_click_callback(app, f'row_{id_row}')
@@ -170,7 +203,14 @@ for id_row in range(N_ROWS):
     for id_elt in range(N_ELEMENTS):
         app = add_element_style_callback(app, f'item_{id_row}_{id_elt}')
 
+@app.callback(Output('dummy4', 'data-dummy'),
+             [Input('elt_info', 'data')])
+def update_elt_info(data):
+    global ELT_PROPS
+    global FOCUSED_ELEMENT
+    ELT_PROPS[FOCUSED_ELEMENT] = pd.DataFrame(data)
+    return ''
 
 if __name__ == '__main__':
-    app.run_server(debug=True)
+    app.run_server(debug=False)
 
