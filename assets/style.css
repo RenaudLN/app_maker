@@ -4,7 +4,7 @@
     min-height: 300px;
     display: block;
     position: absolute;
-    top: 50;
+    top: 100;
     background-size: 300px 60px, 50px 60px, 10px 60px;
     background-image: repeating-linear-gradient(90deg,transparent,transparent 299px,#000 299px,#000 300px),
                       repeating-linear-gradient(90deg,transparent,transparent 49px,#777 49px,#777 50px),
@@ -55,7 +55,7 @@
 #div_btns {
     display:table-cell;
     position:absolute;
-    top:50;
+    top: 100;
     left:600px;
     width:150px;
     padding-top:0px !important; 
@@ -65,7 +65,7 @@
 #div_controls {
     display:table-cell;
     position:absolute;
-    top:50;
+    top: 100;
     left:800px;
     width:auto;
     padding-top:5px !important; 
@@ -108,4 +108,8 @@ button{
 
 input {
     caret-color: #000 !important;
+}
+
+.jsx-3468109796.tab {
+    padding: 5px !important;
 }

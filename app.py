@@ -100,8 +100,9 @@ def add_row_click_callback(app, id):
 def add_row_focus_callback(app, id):
 
     @app.callback(Output(id, 'className'),
-                 [Input('dummy3', 'data-dummy')])
-    def f(trigger):
+                 [Input('dummy3', 'data-dummy'),
+                  Input('dummy', 'data-dummy')])
+    def f(*triggers):
         global ACTIVE_ROWS
         global FOCUSED_ROW
         row = int(id.split('_')[1])
