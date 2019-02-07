@@ -51,10 +51,10 @@ maker = html.Div([
             ),
         ], style={'display':'table-cell'}),
             
-        html.Div([html.Button('Add row', id='add_row', n_clicks=0), html.Br(),
-                html.Button('Add element', id='add_element', n_clicks=0), html.Br(),
-                html.Button('Remove element', id='remove_element', n_clicks=0), html.Br(),
-                html.Button('Reset', id='reset', n_clicks=0), html.Br(),
+        html.Div([html.Button('Add row', id='add_row', className='elt_control', n_clicks=0), html.Br(),
+                html.Button('Add element', id='add_element', className='elt_control', n_clicks=0), html.Br(),
+                html.Button('Remove element', id='remove_element', className='elt_control', n_clicks=0), html.Br(),
+                html.Button('Reset', id='reset', className='elt_control', n_clicks=0), html.Br(),
             ], id='div_btns'
         ),
         html.Div([
@@ -72,7 +72,24 @@ maker = html.Div([
     html.Div(id='dummy4'),
 ])
 
-viewer = html.Div('Hello world')
+def render_viewer():
+    children = []
+    for i_row in ACTIVE_ROWS[ACTIVE_ROWS==1].index:
+        r = ELTS_PER_ROW.loc[i_row]
+        c_list = []
+        for i_elt in r[r==1].index:
+            element = pd.DataFrame(ELT_PROPS[f'item_{i_row}_{i_elt}'])
+            component = element[element.Property == 'Component'].Value.values[0].capitalize()
+            element = element[element.Property != 'Component'].set_index('Property').Value
+            kwargs = element[element != ''].to_dict()
+            if component in dir(dcc):
+                lib = 'dcc'
+            else:
+                lib = 'html'
+            c_list.append(eval(f'{lib}.{component}(**kwargs)'))
+        children.append(html.Div(children=c_list, className='row'))
+    viewer = html.Div(children=children, id='viewer')
+    return viewer
 
 app.scripts.append_script({"external_url": "http://code.interactjs.io/v1.3.4/interact.min.js"})
 
@@ -82,6 +99,7 @@ def update_tab(tab):
     if tab == 'maker':
         return maker
     elif tab == 'viewer':
+        viewer = render_viewer()
         return viewer
 
 
@@ -128,14 +146,10 @@ def add_element_style_callback(app, id):
         elt = int(id.split('_')[2])
         if id == focused:
             return 'elt focused'
-            return {'display':'inline-block', 'background-color':'rgba(180, 180, 180, .25)',
-                    'box-shadow': '0 1px 1px rgba(0, 0, 0, 0.075) inset, 0 0 8px rgba(58, 72, 224, 0.9)'}
         elif ELTS_PER_ROW.loc[row, elt] == 1:
             return 'elt'
-            return {'display':'inline-block'}
         else:
             return 'elt hidden'
-            return{'display':'none'}
 
     return app
 
@@ -227,10 +241,13 @@ def update_id(ts_data, ts_add, ts_rmv, *args):
             for prop in data.Property.values:
                 if prop in new_data.Property.values:
                     new_data.at[new_data.loc[new_data.Property == prop].index[0], 'Value'] = data.loc[data.Property==prop].Value.values[0]
+            if new_data.at[new_data.loc[new_data.Property == 'className'].index[0], 'Value'] == '':
+                new_data.at[new_data.loc[new_data.Property == 'className'].index[0], 'Value'] = 'three columns'
             ELT_PROPS[FOCUSED_ELEMENT] = new_data
             return new_data.to_dict('rows')
     data = ELT_PROPS[FOCUSED_ELEMENT]
     data.at[data.loc[data.Property == 'id'].index[0], 'Value'] = FOCUSED_ELEMENT if data.at[data.loc[data.Property == 'id'].index[0], 'Value'] == '' else data.at[data.loc[data.Property == 'id'].index[0], 'Value']
+    data.at[data.loc[data.Property == 'className'].index[0], 'Value'] = 'three column' if data.at[data.loc[data.Property == 'className'].index[0], 'Value'] == '' else data.at[data.loc[data.Property == 'className'].index[0], 'Value']
     return ELT_PROPS[FOCUSED_ELEMENT].to_dict('rows')
 
 for id_row in range(N_ROWS):

@@ -1,5 +1,5 @@
 
-var dx = 10
+var dx = 50
 var dy = 1
 var gridResize = interact.createSnapGrid({x:dx, y:dy, offset:{x:10, y:10}})
 var gridDrag = interact.createSnapGrid({x:dx, y:1000, offset:{x:10, y:10}})

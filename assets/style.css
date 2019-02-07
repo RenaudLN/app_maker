@@ -73,7 +73,7 @@
     right: 8px;
 }
 
-button{
+.elt_control{
     margin: 5px 20px;
     width: 100%;
     padding: 0px 15px;
@@ -112,4 +112,12 @@ input {
 
 .jsx-3468109796.tab {
     padding: 5px !important;
+}
+
+#viewer {
+    width: 80%;
+    margin-left: 10%;
+    margin-top: 40px;
+    border: 1px solid black;
+    padding: 10px;
 }
