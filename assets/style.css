@@ -105,3 +105,7 @@ button{
     width: 25%;
     font-weight: bold;
 }
+
+input {
+    caret-color: #000 !important;
+}

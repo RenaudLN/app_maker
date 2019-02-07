@@ -21,7 +21,7 @@ N_ELEMENTS = 12
 ELTS_PER_ROW = pd.DataFrame(np.zeros((N_ROWS, N_ELEMENTS), dtype=int))
 ELTS_PER_ROW.at[0, 0] = 1
 ACTIVE_ROWS = pd.Series({i:0 for i in range(N_ROWS)})
-ELT_PROPS = {f'item_{i}_{j}':pd.DataFrame([['id', f'item_{i}_{j}'],['type','div'],['text','hello world']], columns=['Property','Value'])
+ELT_PROPS = {f'item_{i}_{j}':pd.DataFrame([['type', 'div']] + [[prop, ''] for prop in var.component_properties['div']], columns=['Property', 'Value'])
                 for i, j in itertools.product(range(N_ROWS), range(N_ELEMENTS))}
 
 external_stylesheets = ['https://codepen.io/chriddyp/pen/bWLwgP.css']
@@ -192,9 +192,20 @@ def update_id(ts_data, ts_add, ts_rmv, *args):
     s['rmv'] = ts_rmv
     s = s.astype(float)
     if not s.dropna().empty and s.dropna().idxmax() == 'data':
-        data = args[-1]
-        print('CHECKING VALID DATA')
-        return data
+        data = pd.DataFrame(args[-1])
+        component = data.loc[data.Property == 'type'].Value.values[0].lower()
+        print('COMPONENT', component)
+        if component in var.component_properties.keys():
+            print('HERE')
+            new_data = pd.DataFrame([{'Property':'type', 'Value':component}] + 
+                                    [{'Property':p, 'Value':''} for p in var.component_properties[component]])
+            for prop in data.Property.values:
+                if prop in new_data.Property.values:
+                    new_data.at[new_data.loc[new_data.Property == prop].index[0], 'Value'] = data.loc[data.Property==prop].Value.values[0]
+            ELT_PROPS[FOCUSED_ELEMENT] = new_data
+            return new_data.to_dict('rows')
+    data = ELT_PROPS[FOCUSED_ELEMENT]
+    data.at[data.loc[data.Property == 'id'].index[0], 'Value'] = FOCUSED_ELEMENT if data.at[data.loc[data.Property == 'id'].index[0], 'Value'] == '' else data.at[data.loc[data.Property == 'id'].index[0], 'Value']
     return ELT_PROPS[FOCUSED_ELEMENT].to_dict('rows')
 
 for id_row in range(N_ROWS):
@@ -203,13 +214,13 @@ for id_row in range(N_ROWS):
     for id_elt in range(N_ELEMENTS):
         app = add_element_style_callback(app, f'item_{id_row}_{id_elt}')
 
-@app.callback(Output('dummy4', 'data-dummy'),
-             [Input('elt_info', 'data')])
-def update_elt_info(data):
-    global ELT_PROPS
-    global FOCUSED_ELEMENT
-    ELT_PROPS[FOCUSED_ELEMENT] = pd.DataFrame(data)
-    return ''
+# @app.callback(Output('dummy4', 'data-dummy'),
+#              [Input('elt_info', 'data')])
+# def update_elt_info(data):
+#     global ELT_PROPS
+#     global FOCUSED_ELEMENT
+#     ELT_PROPS[FOCUSED_ELEMENT] = pd.DataFrame(data)
+#     return ''
 
 if __name__ == '__main__':
     app.run_server(debug=False)
