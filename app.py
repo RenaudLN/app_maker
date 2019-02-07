@@ -30,7 +30,17 @@ ELT_PROPS = {f'item_{i}_{j}':pd.DataFrame([['Component', default_component]] +
 external_stylesheets = ['https://codepen.io/chriddyp/pen/bWLwgP.css']
 
 app = dash.Dash(__name__, external_stylesheets=external_stylesheets)
+app.config['suppress_callback_exceptions'] = True
+app.title = 'App maker'
+
 app.layout = html.Div([
+    dcc.Tabs([dcc.Tab(label='Maker', value='maker'),
+              dcc.Tab(label='Viewer', value='viewer')],
+             value='maker', id='tabs'),
+    html.Div(id='tabs_content')
+])
+
+maker = html.Div([
     html.Div([
         html.Div([
             html.Div([
@@ -54,7 +64,7 @@ app.layout = html.Div([
                 editable=True,
             )
         ], id='div_controls')
-    ], style={'display':'table'}),
+    ], style={'display':'table'}, id='blabla'),
     
     html.Div(id='dummy'),
     html.Div(id='dummy2'),
@@ -62,8 +72,18 @@ app.layout = html.Div([
     html.Div(id='dummy4'),
 ])
 
-# app.scripts.append_script({"external_url": "C:/Users/renau/App_maker/assets/interactjs/dist/interact.min.js"})
+viewer = html.Div('Hello world')
+
 app.scripts.append_script({"external_url": "http://code.interactjs.io/v1.3.4/interact.min.js"})
+
+@app.callback(Output('tabs_content', 'children'),
+             [Input('tabs', 'value')])
+def update_tab(tab):
+    if tab == 'maker':
+        return maker
+    elif tab == 'viewer':
+        return viewer
+
 
 def add_row_click_callback(app, id):
 
