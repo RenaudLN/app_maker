@@ -5,10 +5,10 @@
     display: block;
     position: absolute;
     top: 100;
-    background-size: 300px 60px, 50px 60px, 10px 60px;
+    background-size: 300px 60px, 50px 60px;/* 10px 60px;*/
     background-image: repeating-linear-gradient(90deg,transparent,transparent 299px,#000 299px,#000 300px),
-                      repeating-linear-gradient(90deg,transparent,transparent 49px,#777 49px,#777 50px),
-                      repeating-linear-gradient(90deg,transparent,transparent 9px,#CCC 9px,#CCC 10px);
+                      repeating-linear-gradient(90deg,transparent,transparent 49px,#777 49px,#777 50px);
+                      /* repeating-linear-gradient(90deg,transparent,transparent 9px,#CCC 9px,#CCC 10px); */
 }
 
 .elt {
@@ -23,7 +23,8 @@
     height: 100%;
     position: relative;
     z-index: 10;
-    display: inline-block
+    display: inline-block;
+    color:black;
   }
 
 .elt.focused {
@@ -120,4 +121,30 @@ input {
     margin-top: 40px;
     border: 1px solid black;
     padding: 10px;
+    min-height: 500px
+}
+
+.width_control {
+    height: 100%;
+    width: 15px;
+    position:absolute;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    -webkit-user-select: none;
+    -moz-user-select: none;
+    -ms-user-select: none;
+    user-select: none;
+}
+
+.plus {
+    left: 15px;
+    background-color: rgba(220,255,211,1)
+}
+
+.minus {
+    left: 0px;
+    background-color: rgba(255,228,226,1);
+    border-radius: 4px 0px 0px 4px;
 }

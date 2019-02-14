@@ -16,8 +16,8 @@ import var
 
 FOCUSED_ROW = 'row_0'
 FOCUSED_ELEMENT = 'item_0_0'
-N_ROWS = 6
-N_ELEMENTS = 12
+N_ROWS = 3
+N_ELEMENTS = 4
 ELTS_PER_ROW = pd.DataFrame(np.zeros((N_ROWS, N_ELEMENTS), dtype=int))
 ELTS_PER_ROW.at[0, 0] = 1
 ACTIVE_ROWS = pd.Series({i:0 for i in range(N_ROWS)})
@@ -26,6 +26,8 @@ ELT_PROPS = {f'item_{i}_{j}':pd.DataFrame([['Component', default_component]] +
                                           [[prop, ''] for prop in var.component_properties[default_component]],
                                           columns=['Property', 'Value'])
             for i, j in itertools.product(range(N_ROWS), range(N_ELEMENTS))}
+ELT_WIDTH = pd.Series(150, index=[f'item_{i}_{j}' for i, j in itertools.product(range(N_ROWS), range(N_ELEMENTS))])
+DX = 50
 
 external_stylesheets = ['https://codepen.io/chriddyp/pen/bWLwgP.css']
 
@@ -45,7 +47,11 @@ maker = html.Div([
         html.Div([
             html.Div([
                 html.Div([
-                    html.Div(className='elt hidden', id=f'item_{id_row}_{id_item}') for id_item in range(N_ELEMENTS)
+                    html.Div([
+                            html.Div('-', id=f'minus_{id_row}_{id_item}', className='width_control minus'),
+                            html.Div('+', id=f'plus_{id_row}_{id_item}', className='width_control plus'),
+                        ], className='elt hidden row', id=f'item_{id_row}_{id_item}',
+                        style={'width':'{}px'.format(ELT_WIDTH[f'item_{id_row}_{id_item}'])}) for id_item in range(N_ELEMENTS)
                     ], className='line hidden', n_clicks=0, id=f'row_{id_row}') for id_row in range(N_ROWS)
                 ], id='div_maker', className='maker'
             ),
@@ -66,10 +72,7 @@ maker = html.Div([
         ], id='div_controls')
     ], style={'display':'table'}, id='blabla'),
     
-    html.Div(id='dummy'),
-    html.Div(id='dummy2'),
-    html.Div(id='dummy3'),
-    html.Div(id='dummy4'),
+    html.Div(id='dummy')
 ])
 
 def render_viewer():
@@ -78,7 +81,7 @@ def render_viewer():
         r = ELTS_PER_ROW.loc[i_row]
         c_list = []
         for i_elt in r[r==1].index:
-            element = pd.DataFrame(ELT_PROPS[f'item_{i_row}_{i_elt}'])
+            element = pd.DataFrame(ELT_PROPS[f'item_{int(i_row)}_{int(i_elt)}'])
             component = element[element.Property == 'Component'].Value.values[0].capitalize()
             element = element[element.Property != 'Component'].set_index('Property').Value
             kwargs = element[element != ''].to_dict()
@@ -91,7 +94,7 @@ def render_viewer():
     viewer = html.Div(children=children, id='viewer')
     return viewer
 
-app.scripts.append_script({"external_url": "http://code.interactjs.io/v1.3.4/interact.min.js"})
+# app.scripts.append_script({"external_url": "http://code.interactjs.io/v1.3.4/interact.min.js"})
 
 @app.callback(Output('tabs_content', 'children'),
              [Input('tabs', 'value')])
@@ -105,7 +108,7 @@ def update_tab(tab):
 
 def add_row_click_callback(app, id):
 
-    @app.callback(Output(id, 'data-dummy'),
+    @app.callback(Output(id, 'data-none'),
                  [Input(id, 'n_clicks')])
     def f(n):
         if n > 0:
@@ -118,8 +121,8 @@ def add_row_click_callback(app, id):
 def add_row_focus_callback(app, id):
 
     @app.callback(Output(id, 'className'),
-                 [Input('dummy3', 'data-dummy'),
-                  Input('dummy', 'data-dummy')])
+                 [Input('dummy', 'data-row'),
+                  Input('dummy', 'data-focused_row')])
     def f(*triggers):
         global ACTIVE_ROWS
         global FOCUSED_ROW
@@ -134,10 +137,10 @@ def add_row_focus_callback(app, id):
     
     return app
 
-def add_element_style_callback(app, id):
+def add_element_class_callback(app, id):
 
     @app.callback(Output(id, 'className'),
-                 [Input('dummy2', 'data-dummy')])
+                 [Input('dummy', 'data-focused_elt')])
     def f(focused):
         global ELTS_PER_ROW
         global FOCUSED_ROW
@@ -153,7 +156,31 @@ def add_element_style_callback(app, id):
 
     return app
 
-@app.callback(Output('dummy', 'data-dummy'),
+def add_element_style_callback(app, id):
+
+    minus_div = 'minus_' + '_'.join(id.split('_')[1:])
+    plus_div = 'plus_' + '_'.join(id.split('_')[1:])
+
+    @app.callback(Output(id, 'style'),
+                 [Input(minus_div, 'n_clicks_timestamp'),
+                  Input(plus_div, 'n_clicks_timestamp')])
+    def update_width(ts_minus, ts_plus):
+        global ELT_WIDTH
+        ts_minus = 0 if ts_minus is None else ts_minus
+        ts_plus = 0 if ts_plus is None else ts_plus
+        current_width = ELT_WIDTH[id]
+        if ts_plus > ts_minus:
+            width = min(current_width + DX, 600)
+        elif ts_minus > ts_plus:
+            width = max(current_width - DX, 50)
+        else:
+            width = current_width
+        ELT_WIDTH[id] = width
+        return {'width':f'{width}px'}
+
+    return app
+
+@app.callback(Output('dummy', 'data-focused_row'),
              [Input('add_row', 'n_clicks_timestamp')] +
              [Input(f'row_{i}', 'n_clicks_timestamp') for i in range(N_ROWS)])
 def f(ts_add, *args):
@@ -169,7 +196,7 @@ def f(ts_add, *args):
     return FOCUSED_ROW
 
 
-@app.callback(Output('dummy2', 'data-dummy'),
+@app.callback(Output('dummy', 'data-focused_elt'),
              [Input('add_element', 'n_clicks_timestamp'),
               Input('remove_element', 'n_clicks_timestamp')] +
              [Input(f'item_{i}_{j}', 'n_clicks_timestamp') for i, j in itertools.product(range(N_ROWS), range(N_ELEMENTS))])
@@ -198,7 +225,7 @@ def f(ts_add, ts_rmv, *args):
 
     return FOCUSED_ELEMENT
 
-@app.callback(Output('dummy3', 'data-dummy'),
+@app.callback(Output('dummy', 'data-row'),
              [Input('add_row', 'n_clicks_timestamp'),
               Input('reset', 'n_clicks_timestamp')])
 def f(ts_add, ts_rst):
@@ -227,6 +254,7 @@ def update_id(ts_data, ts_add, ts_rmv, *args):
     time.sleep(.2)
     global ELT_PROPS
     global FOCUSED_ELEMENT
+    global ELT_WIDTH
     s = pd.Series(args[:-1], index=[f'item_{i}_{j}' for i, j in itertools.product(range(N_ROWS), range(N_ELEMENTS))])
     s['data'] = ts_data
     s['add'] = ts_add
@@ -241,29 +269,28 @@ def update_id(ts_data, ts_add, ts_rmv, *args):
             for prop in data.Property.values:
                 if prop in new_data.Property.values:
                     new_data.at[new_data.loc[new_data.Property == prop].index[0], 'Value'] = data.loc[data.Property==prop].Value.values[0]
-            if new_data.at[new_data.loc[new_data.Property == 'className'].index[0], 'Value'] == '':
-                new_data.at[new_data.loc[new_data.Property == 'className'].index[0], 'Value'] = 'three columns'
+            # if 'className' in new_data.Property.values:
+            #     classes = new_data.at[new_data.loc[new_data.Property == 'className'].index[0], 'Value']
+            #     new_data.at[new_data.loc[new_data.Property == 'className'].index[0], 'Value'] = classes
             ELT_PROPS[FOCUSED_ELEMENT] = new_data
             return new_data.to_dict('rows')
     data = ELT_PROPS[FOCUSED_ELEMENT]
     data.at[data.loc[data.Property == 'id'].index[0], 'Value'] = FOCUSED_ELEMENT if data.at[data.loc[data.Property == 'id'].index[0], 'Value'] == '' else data.at[data.loc[data.Property == 'id'].index[0], 'Value']
-    data.at[data.loc[data.Property == 'className'].index[0], 'Value'] = 'three column' if data.at[data.loc[data.Property == 'className'].index[0], 'Value'] == '' else data.at[data.loc[data.Property == 'className'].index[0], 'Value']
+    classes = data.at[data.loc[data.Property == 'className'].index[0], 'Value'].split(' ')
+    classes = list(set(classes) - set(var.numbers.values()))
+    classes.insert(0, var.numbers[int(ELT_WIDTH[FOCUSED_ELEMENT] / DX)])
+    if 'columns' not in classes:
+        classes.append('columns')
+    data.at[data.loc[data.Property == 'className'].index[0], 'Value'] = ' '.join(classes)
     return ELT_PROPS[FOCUSED_ELEMENT].to_dict('rows')
 
 for id_row in range(N_ROWS):
     app = add_row_click_callback(app, f'row_{id_row}')
     app = add_row_focus_callback(app, f'row_{id_row}')
     for id_elt in range(N_ELEMENTS):
+        app = add_element_class_callback(app, f'item_{id_row}_{id_elt}')
         app = add_element_style_callback(app, f'item_{id_row}_{id_elt}')
 
-# @app.callback(Output('dummy4', 'data-dummy'),
-#              [Input('elt_info', 'data')])
-# def update_elt_info(data):
-#     global ELT_PROPS
-#     global FOCUSED_ELEMENT
-#     ELT_PROPS[FOCUSED_ELEMENT] = pd.DataFrame(data)
-#     return ''
-
 if __name__ == '__main__':
-    app.run_server(debug=False)
+    app.run_server(debug=True)
 
