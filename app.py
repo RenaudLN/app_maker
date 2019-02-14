@@ -89,6 +89,9 @@ def render_viewer():
             component = element[element.Property == 'Component'].Value.values[0].capitalize()
             element = element[element.Property != 'Component'].set_index('Property').Value
             kwargs = element[element != ''].to_dict()
+            for prop in ['style', 'options']:
+                if prop in kwargs.keys():
+                    kwargs[prop] = eval(kwargs[prop])
             if component in dir(dcc):
                 lib = 'dcc'
             else:
