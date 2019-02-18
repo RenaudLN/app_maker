@@ -7,7 +7,8 @@ component_properties = {item: eval(f'dcc.{item}(id="dummy").available_properties
 component_properties.update({item: eval(f'html.{item}(id="dummy").available_properties') for item in dir(html) if '_' not in item and item != 'version'})
 removed_props = ['contextMenu', 'tabIndex', 'spellCheck', 'spellcheck', 'lang', 'draggable', 'dir', 'contentEditable', 'accessKey', 'name', 'formAction', 'form',
                  'autoFocus', 'autofocus', 'data-*', 'aria-*', 'key', 'role', 'n_clicks', 'n_clicks_timestamp', 'n_blur', 'n_blur_timestamp', 'n_submit', 'n_submit_timestamp',
-                 'selectionDirection', 'selectionStart', 'selectionEnd', 'inputmode']
+                 'selectionDirection', 'selectionStart', 'selectionEnd', 'inputmode', 'submit_n_clicks_timestamp', 'submit_n_clicks', 'cancel_n_clicks', 'cancel_n_clicks_timestamp',
+                 ]
 for key, item in component_properties.items():
     component_properties[key] = list(set(component_properties[key]) - set(removed_props))
 

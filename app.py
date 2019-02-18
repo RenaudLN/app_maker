@@ -86,12 +86,16 @@ def render_viewer():
         c_list = []
         for i_elt in r[r==1].index:
             element = pd.DataFrame(ELT_PROPS.loc[i_row, i_elt])
-            component = element[element.Property == 'Component'].Value.values[0].capitalize()
+            component = element[element.Property == 'Component'].Value.values[0]
             element = element[element.Property != 'Component'].set_index('Property').Value
             kwargs = element[element != ''].to_dict()
-            for prop in ['style', 'options']:
+            for prop in ['style', 'labelStyle']:
                 if prop in kwargs.keys():
                     kwargs[prop] = eval(kwargs[prop])
+            for prop in ['options']:
+                if prop in kwargs.keys():
+                    choices = kwargs[prop].split(',')
+                    kwargs[prop] = [{'label':x, 'value':x} for x in choices]
             if component in dir(dcc):
                 lib = 'dcc'
             else:
@@ -310,7 +314,7 @@ def update_id(ts_data, ts_add, ts_rmv, *args):
         components = list(var.component_properties.keys())
         components_lower = list(map(lambda x: x.lower(), components))
         if component.lower() in components_lower:
-            component = components[components_lower.index(component)]
+            component = components[components_lower.index(component.lower())]
             new_data = pd.DataFrame([{'Property':'Component', 'Value':component}] + 
                                     [{'Property':p, 'Value':''} for p in var.component_properties[component]])
             for prop in data.Property.values:
@@ -321,12 +325,15 @@ def update_id(ts_data, ts_add, ts_rmv, *args):
     data = ELT_PROPS.loc[FOCUSED_ELEMENT]
     if data.at[data.loc[data.Property == 'id'].index[0], 'Value'] == '':
         data.at[data.loc[data.Property == 'id'].index[0], 'Value'] = 'item_{}_{}'.format(*FOCUSED_ELEMENT)
-    classes = data.at[data.loc[data.Property == 'className'].index[0], 'Value'].split(' ')
-    classes = list(set(classes) - set(var.numbers.values()))
-    classes.insert(0, var.numbers[int(ELT_WIDTH.loc[FOCUSED_ELEMENT] / DX)])
-    if 'columns' not in classes:
-        classes.append('columns')
-    data.at[data.loc[data.Property == 'className'].index[0], 'Value'] = ' '.join(classes)
+    try:
+        classes = data.at[data.loc[data.Property == 'className'].index[0], 'Value'].split(' ')
+        classes = list(set(classes) - set(var.numbers.values()))
+        classes.insert(0, var.numbers[int(ELT_WIDTH.loc[FOCUSED_ELEMENT] / DX)])
+        if 'columns' not in classes:
+            classes.append('columns')
+        data.at[data.loc[data.Property == 'className'].index[0], 'Value'] = ' '.join(classes)
+    except:
+        print('No attribute className')
     return ELT_PROPS.loc[FOCUSED_ELEMENT].to_dict('rows')
 
 for id_row in range(N_ROWS):
