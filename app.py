@@ -16,8 +16,8 @@ import var
 
 FOCUSED_ROW = 0
 FOCUSED_ELEMENT = (0, 0)
-N_ROWS = 3
-N_ELEMENTS = 4
+N_ROWS = 6
+N_ELEMENTS = 8
 ACTIVE_ELTS = pd.DataFrame(np.zeros((N_ROWS, N_ELEMENTS), dtype=int))
 ACTIVE_ELTS.at[0, 0] = 1
 ACTIVE_ROWS = pd.Series({i:0 for i in range(N_ROWS)})
@@ -36,13 +36,6 @@ external_stylesheets = ['https://codepen.io/chriddyp/pen/bWLwgP.css']
 app = dash.Dash(__name__, external_stylesheets=external_stylesheets)
 app.config['suppress_callback_exceptions'] = True
 app.title = 'App maker'
-
-app.layout = html.Div([
-    dcc.Tabs([dcc.Tab(label='Maker', value='maker'),
-              dcc.Tab(label='Viewer', value='viewer')],
-             value='maker', id='tabs'),
-    html.Div(id='tabs_content')
-])
 
 maker = html.Div([
     html.Div([
@@ -79,6 +72,13 @@ maker = html.Div([
     html.Div(id='dummy')
 ])
 
+app.layout = html.Div([
+    dcc.Tabs([dcc.Tab(label='Maker', value='maker'),
+              dcc.Tab(label='Viewer', value='viewer')],
+             value='maker', id='tabs'),
+    html.Div(maker, id='tabs_content')
+])
+
 def render_viewer():
     children = []
     for i_row in ACTIVE_ROWS[ACTIVE_ROWS==1].index:
@@ -100,8 +100,6 @@ def render_viewer():
         children.append(html.Div(children=c_list, className='row'))
     viewer = html.Div(children=children, id='viewer')
     return viewer
-
-# app.scripts.append_script({"external_url": "http://code.interactjs.io/v1.3.4/interact.min.js"})
 
 @app.callback(Output('tabs_content', 'children'),
              [Input('tabs', 'value')])
@@ -308,12 +306,15 @@ def update_id(ts_data, ts_add, ts_rmv, *args):
     s = s.astype(float)
     if not s.dropna().empty and s.dropna().idxmax() == 'data':
         data = pd.DataFrame(args[-1])
-        component = data.loc[data.Property == 'Component'].Value.values[0].capitalize()
-        if component in var.component_properties.keys():
+        component = data.loc[data.Property == 'Component'].Value.values[0]
+        components = list(var.component_properties.keys())
+        components_lower = list(map(lambda x: x.lower(), components))
+        if component.lower() in components_lower:
+            component = components[components_lower.index(component)]
             new_data = pd.DataFrame([{'Property':'Component', 'Value':component}] + 
                                     [{'Property':p, 'Value':''} for p in var.component_properties[component]])
             for prop in data.Property.values:
-                if prop in new_data.Property.values:
+                if prop in new_data.Property.values and prop != 'Component':
                     new_data.at[new_data.loc[new_data.Property == prop].index[0], 'Value'] = data.loc[data.Property==prop].Value.values[0]
             ELT_PROPS.at[FOCUSED_ELEMENT] = new_data
             return new_data.to_dict('rows')
